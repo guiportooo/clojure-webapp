@@ -27,10 +27,24 @@
   {:status 301
    :headers {"Location" "http://github.com/ring-clojure/ring"}})
 
+(defn test4-handler
+  [request]
+  (throw (RuntimeException. "Error!")))
+
 (defn route-handler
   [request]
   (condp = (:uri request)
     "/test1" (test1-handler request)
     "/test2" (test2-handler request)
     "/test3" (handlers/handler3 request)
-    (example-handler request)))
+    "/test4" (test4-handler request)
+    nil))
+
+(defn wrapping-handler
+  [request]
+  (try
+    (if-let [resp (route-handler request)]
+      resp
+      {:status 404 :body (str "Not found: " (:uri request))})
+    (catch Throwable e
+      {:status 500 :body (apply str (interpose "\n" (.getStackTrace e)))})))
