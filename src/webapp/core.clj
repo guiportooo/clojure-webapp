@@ -48,3 +48,13 @@
       {:status 404 :body (str "Not found: " (:uri request))})
     (catch Throwable e
       {:status 500 :body (apply str (interpose "\n" (.getStackTrace e)))})))
+
+(defn simple-log-middleware
+  [handler]
+  (fn
+    [{:keys [uri] :as request}]
+    (println "Request path:" uri)
+    (handler request)))
+
+(def full-handler
+  (simple-log-middleware wrapping-handler))
