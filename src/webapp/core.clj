@@ -7,7 +7,10 @@
 
 (defn example-handler
   [request]
-  {:body "Hello Clojure with hot reloading!"})
+  {:headers {"location" "http://github.com/ring-clojure/ring"
+             "Set-cookie" "test=1"}
+   :status 301
+   :body (java.io.File. "test.txt")})
 
 (defn on-init []
   (println "Initializing sample webapp!"))
