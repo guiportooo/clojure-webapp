@@ -5,6 +5,7 @@
             [ring.middleware.params]
             [ring.middleware.keyword-params]
             [ring.middleware.multipart-params]
+            [ring.middleware.cookies]
             [webapp.html :as html]
             [clojure.string]))
 
@@ -47,10 +48,18 @@
      [:p "This content comes from layout function"]
      content]]))
 
+(defn cookie-handler
+  [request]
+  {:body (layout
+          [:div
+           [:p "Cookies:"]
+           [:pre (:cookies request)]])})
+
 (defn form-handler
   [request]
   {:status 200
    :headers {"Content-type" "text/html"}
+   :cookies {:username (:login (:params request))}
    :body (layout
           [:div
            [:p "Params:"]
@@ -73,6 +82,7 @@
     "/test3" (handlers/handler3 request)
     "/test4" (test4-handler request)
     "/form"  (form-handler request)
+    "/cookies" (cookie-handler request)
     nil))
 
 (defn wrapping-handler
@@ -134,4 +144,5 @@
       ring.middleware.keyword-params/wrap-keyword-params
       ring.middleware.params/wrap-params
       ring.middleware.multipart-params/wrap-multipart-params
+      ring.middleware.cookies/wrap-cookies
       simple-log-middleware))
