@@ -2,6 +2,9 @@
   (:require [webapp.handlers :as handlers]
             [ring.middleware.resource :as resource]
             [ring.middleware.file-info :as file-info]
+            [ring.middleware.params]
+            [ring.middleware.keyword-params]
+            [ring.middleware.multipart-params]
             [clojure.string]))
 
 (defn foo
@@ -34,6 +37,16 @@
   [request]
   (throw (RuntimeException. "Error!")))
 
+(defn form-handler
+  [request]
+  {:status 200
+   :headers {"Content-type" "text/plain"}
+   :body (str "local path\n:" (.getAbsolutePath (get-in request [:params :file :tempfile]))
+              "\nmultipart-params:\n" (:multipart-params request)
+              "\nparams:\n" (:params request)
+              "\nquery-params:\n" (:query-params request)
+              "\nform-params:\n" (:form-params request))})
+
 (defn route-handler
   [request]
   (condp = (:uri request)
@@ -41,6 +54,7 @@
     "/test2" (test2-handler request)
     "/test3" (handlers/handler3 request)
     "/test4" (test4-handler request)
+    "/form"  (form-handler request)
     nil))
 
 (defn wrapping-handler
@@ -99,4 +113,7 @@
       file-info/wrap-file-info
       wrap-case-middleware
       wrap-exception-middleware
+      ring.middleware.keyword-params/wrap-keyword-params
+      ring.middleware.params/wrap-params
+      ring.middleware.multipart-params/wrap-multipart-params
       simple-log-middleware))
