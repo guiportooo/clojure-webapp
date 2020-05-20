@@ -49,6 +49,25 @@
     (catch Throwable e
       {:status 500 :body (apply str (interpose "\n" (.getStackTrace e)))})))
 
+(defn exception-middleware
+  [handler request]
+  (try (handler request)
+       (catch Throwable e
+         {:status 500 :body (apply str (interpose "\n" (.getStackTrace e)))})))
+
+(defn wrap-exception-middleware
+  [handler]
+  (fn
+    [request]
+    (exception-middleware handler request)))
+
+(defn not-found-middleware
+  [handler]
+  (fn
+    [request]
+    (or (handler request)
+        {:status 404 :body (str "404 Not Found (with middleware!):" (:uri request))})))
+
 (defn simple-log-middleware
   [handler]
   (fn
@@ -57,4 +76,7 @@
     (handler request)))
 
 (def full-handler
-  (simple-log-middleware wrapping-handler))
+  (-> route-handler
+      not-found-middleware
+      wrap-exception-middleware
+      simple-log-middleware))
