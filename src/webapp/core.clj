@@ -1,5 +1,7 @@
 (ns webapp.core
   (:require [webapp.handlers :as handlers]
+            [ring.middleware.resource :as resource]
+            [ring.middleware.file-info :as file-info]
             [clojure.string]))
 
 (defn foo
@@ -93,6 +95,8 @@
 (def full-handler
   (-> route-handler
       not-found-middleware
+      (resource/wrap-resource "public")
+      file-info/wrap-file-info
       wrap-case-middleware
       wrap-exception-middleware
       simple-log-middleware))
