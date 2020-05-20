@@ -1,5 +1,6 @@
 (ns webapp.core
-  (:require [webapp.handlers :as handlers]))
+  (:require [webapp.handlers :as handlers]
+            [clojure.string]))
 
 (defn foo
   "I don't do a whole lot."
@@ -49,6 +50,27 @@
     (catch Throwable e
       {:status 500 :body (apply str (interpose "\n" (.getStackTrace e)))})))
 
+(defn not-found-middleware
+  [handler]
+  (fn
+    [request]
+    (or (handler request)
+        {:status 404 :body (str "404 Not Found (with middleware!):" (:uri request))})))
+
+(defn case-middleware
+  [handler request]
+  (let [request (update-in request [:uri] clojure.string/lower-case)
+        response (handler request)]
+    (if (string? (:body response))
+      (update-in response [:body] clojure.string/capitalize)
+      response)))
+
+(defn wrap-case-middleware
+  [handler]
+  (fn
+    [request]
+    (case-middleware handler request)))
+
 (defn exception-middleware
   [handler request]
   (try (handler request)
@@ -61,13 +83,6 @@
     [request]
     (exception-middleware handler request)))
 
-(defn not-found-middleware
-  [handler]
-  (fn
-    [request]
-    (or (handler request)
-        {:status 404 :body (str "404 Not Found (with middleware!):" (:uri request))})))
-
 (defn simple-log-middleware
   [handler]
   (fn
@@ -78,5 +93,6 @@
 (def full-handler
   (-> route-handler
       not-found-middleware
+      wrap-case-middleware
       wrap-exception-middleware
       simple-log-middleware))
