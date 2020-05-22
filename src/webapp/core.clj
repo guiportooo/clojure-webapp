@@ -9,6 +9,7 @@
             [ring.middleware.session]
             [ring.middleware.session.memory]
             [webapp.html :as html]
+            [webapp.route :as route]
             [clojure.string]))
 
 (defn foo
@@ -30,7 +31,7 @@
 
 (defn test1-handler
   [request]
-  {:body "test1"})
+  {:body (str "test1, route args: " (:route-params request))})
 
 (defn test2-handler
   [request]
@@ -50,7 +51,7 @@
      [:p "This content comes from layout function"]
      content]]))
 
-(defn cookie-handler
+(defn cookies-handler
   [request]
   {:body (layout
           [:div
@@ -90,18 +91,18 @@
   {:body "Logget out."
    :session nil})
 
-(defn route-handler
-  [request]
-  (condp = (:uri request)
-    "/test1" (test1-handler request)
-    "/test2" (test2-handler request)
-    "/test3" (handlers/handler3 request)
-    "/test4" (test4-handler request)
-    "/form" (form-handler request)
-    "/cookies" (cookie-handler request)
-    "/session" (session-handler request)
-    "/logout" (logout-handler request)
-    nil))
+(def route-handler
+  (route/routing
+   (route/with-route-matches :get "/test1" test1-handler)
+   (route/with-route-matches :get "/test1/:id" test1-handler)
+   (route/with-route-matches :get "/test2" test2-handler)
+   (route/with-route-matches :get "/test3" handlers/handler3)
+   (route/with-route-matches :get "/test4" test4-handler)
+   (route/with-route-matches :get "/form" form-handler)
+   (route/with-route-matches :post "/form" form-handler)
+   (route/with-route-matches :get "/cookies" cookies-handler)
+   (route/with-route-matches :get "/session" session-handler)
+   (route/with-route-matches :get "/logout" logout-handler)))
 
 (defn wrapping-handler
   [request]
