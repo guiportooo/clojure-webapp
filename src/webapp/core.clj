@@ -9,6 +9,7 @@
             [ring.middleware.session]
             [ring.middleware.session.memory]
             [webapp.html :as html]
+            [webapp.blog :as blog]
             [webapp.route :as route]
             [clojure.string]))
 
@@ -93,6 +94,7 @@
 
 (def route-handler
   (route/routing
+   blog/blog-handler
    (route/with-route-matches :get "/test1" test1-handler)
    (route/with-route-matches :get "/test1/:id" test1-handler)
    (route/with-route-matches :get "/test2" test2-handler)
