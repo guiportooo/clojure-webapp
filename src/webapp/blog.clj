@@ -11,7 +11,6 @@
 (defn get-blog-entries
   []
   (sort-by :id (vals @BLOG)))
-(sort-by :id (vals @BLOG))
 
 (defn add-blog-entry
   [entry]
@@ -52,6 +51,16 @@
   [request]
   (Long/parseLong (-> request :route-params :id)))
 
+(defn json-error-middleware
+  [handler]
+  (fn
+    [request]
+    (try (handler request)
+         (catch Throwable e
+           (assoc (json-response {:message (.getMessage e)
+                                  :stacktrace (map str (.getStackTrace e))})
+                  :status 500)))))
+
 (defn get-handler
   [request]
   (json-response (get-blog-entries)))
@@ -73,9 +82,11 @@
   (json-response (delete-blog-entry (get-id request))))
 
 (def blog-handler
-  (route/routing
-   (route/with-route-matches :get "/entries" get-handler)
-   (route/with-route-matches :post "/entries" post-handler)
-   (route/with-route-matches :get "/entries/:id" get-entry-handler)
-   (route/with-route-matches :put "/entries/:id" put-handler)
-   (route/with-route-matches :delete "/entries/:id" delete-handler)))
+  (->
+   (route/routing
+    (route/with-route-matches :get "/entries" get-handler)
+    (route/with-route-matches :post "/entries" post-handler)
+    (route/with-route-matches :get "/entries/:id" get-entry-handler)
+    (route/with-route-matches :put "/entries/:id" put-handler)
+    (route/with-route-matches :delete "/entries/:id" delete-handler))
+   json-error-middleware))
