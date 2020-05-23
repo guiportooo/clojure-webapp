@@ -5,6 +5,8 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/data.json "0.2.3"]
+                 [org.postgresql/postgresql "42.2.12"]
+                 [org.clojure/java.jdbc "0.3.2"]
                  [ring "1.8.0"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:handler  webapp.core/full-handler

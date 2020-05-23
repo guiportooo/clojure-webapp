@@ -2,39 +2,40 @@
   [:require
    [clojure.data.json :as json]
    [clojure.walk :as walk]
+   [clojure.java.jdbc :as jdbc]
+   [webapp.db :as db]
    [webapp.route :as route]])
-
-(defonce BLOG (atom {}))
-
-(defonce ID (atom 0))
 
 (defn get-blog-entries
   []
-  (sort-by :id (vals @BLOG)))
+  (jdbc/query db/postgresql-db
+              ["SELECT id, title, body FROM entries"]))
 
 (defn add-blog-entry
   [entry]
-  (let [id (swap! ID inc)]
-    (get (swap! BLOG assoc id (assoc entry :id id)) id)))
+  (jdbc/with-db-transaction [database db/postgresql-db]
+    (jdbc/insert! database :entries (select-keys entry [:title :body]))))
 
 (defn get-blog-entry
   [id]
-  (get @BLOG id))
+  (first (jdbc/query db/postgresql-db
+                     ["SELECT id, title, body FROM entries WHERE id=?" id])))
 
 (defn update-blog-entry
   [id entry]
-  (when (get-blog-entry id)
-    (get (swap! BLOG assoc id (assoc entry :id id)) id)))
+  (jdbc/with-db-transaction [database db/postgresql-db]
+    (jdbc/update! database :entries (select-keys entry [:title :body])))
+  (get-blog-entry id))
 
 (defn alter-blog-entry
   [id entry-values]
-  (when (get-blog-entries id)
-    (get (swap! BLOG update-in [id] merge entry-values) id)))
+  (update-blog-entry id entry-values))
 
 (defn delete-blog-entry
   [id]
-  (when (get-blog-entry id)
-    (swap! BLOG dissoc id)
+  (when (get-blog-entries id)
+    (jdbc/with-db-transaction [database db/postgresql-db]
+      (jdbc/delete! database :entries ["id=?" id]))
     {:id id}))
 
 (defn json-response
