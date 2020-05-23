@@ -1,5 +1,6 @@
 (ns webapp.db
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [korma.db :as korma-db]
+            [korma.core :as korma]))
 
 (def postgresql-db
   {:classname "org.postgresql.Driver"
@@ -7,3 +8,7 @@
    :subname "//localhost:5432/clojure_blog"
    :user "postgres"
    :password "docker"})
+
+(korma-db/defdb korma-pool postgresql-db)
+
+(korma/defentity entries)
